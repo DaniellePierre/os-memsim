@@ -57,17 +57,13 @@ int main(int argc, char **argv)
         // TODO: implement this!
         if(arguments.at(0) == "create"){//MINIMUM
 
-
-            /*
             int text_size;
             int data_size;
 
-            text_size = std::stoi(arguments.at(1));
-            data_size = std::stoi(arguments.at(2));
+            text_size = std::stoi(arguments[1]);
+            data_size = std::stoi(arguments[2]);
             
             createProcess(text_size, data_size, mmu, page_table);
-            */
-
 
         }else if(arguments.at(0) == "allocate"){//MINIMUM
             /*
@@ -130,17 +126,13 @@ void createProcess(int text_size, int data_size, Mmu *mmu, PageTable *page_table
     // TODO: implement this!
     //   - create new process in the MMU
     int pid;
-    //uint32_t pid;
     pid = mmu->createProcess();
-
     //   - allocate new variables for the <TEXT>, <GLOBALS>, and <STACK>
     allocateVariable(pid, "<TEXT>", DataType::Char, text_size, mmu, page_table);
-    allocateVariable(pid, "<GLOBALS", DataType::Char, data_size, mmu, page_table);
-    allocateVariable(pid, "<STACK", DataType::Char, 65536, mmu, page_table);
-
+    allocateVariable(pid, "<GLOBALS>", DataType::Char, data_size, mmu, page_table);
+    allocateVariable(pid, "<STACK>", DataType::Char, 65536, mmu, page_table);
     //   - print pid
     printf("%d\n", pid);
-   //std::cout << pid;
 }
 
 void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_t num_elements, Mmu *mmu, PageTable *page_table)
