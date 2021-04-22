@@ -17,7 +17,7 @@ void terminateProcess(uint32_t pid, Mmu *mmu, PageTable *page_table);
 
 void splitString(std::string text, char d, std::vector<std::string>& result); //Approval from Professor Marrinan - From OS-osshell
 
-//DataType findDataType(std::string data_type_as_string);
+DataType findDataType(std::string data_type_as_string);
 
 int main(int argc, char **argv)
 {
@@ -60,35 +60,55 @@ int main(int argc, char **argv)
             int text_size;
             int data_size;
 
-            text_size = std::stoi(arguments[1]);
-            data_size = std::stoi(arguments[2]);
+            text_size = std::stoi(arguments.at(1));
+            data_size = std::stoi(arguments.at(2));
             
             createProcess(text_size, data_size, mmu, page_table);
 
         }else if(arguments.at(0) == "allocate"){//MINIMUM
-            /*
+            
             int pid;
-            DataType date_type;
+            DataType type_of_data;
             int num_elements;
 
             pid = std::stoi(arguments.at(1));
-            
-            data_type = findDataType(arguments.at(3));
+            type_of_data = findDataType(arguments.at(3));
             num_elements = std::stoi(arguments.at(4));
 
-            allocateVariable(pid, arguments.at(2), data_type, num_elements, mmu, page_table);
-            */
+            allocateVariable(pid, arguments.at(2), type_of_data, num_elements, mmu, page_table);
 
         }else if(arguments.at(0) == "set"){//MINIMUM
+        int pid;
+        std::string name;
+
+        pid = std::stoi(arguments.at(1));
+        name = arguments.at(2);
+
 
         }else if(arguments.at(0) == "print"){//MINIMUM
+
+            if(arguments.at(1) == "mmu"){ //if <object> is "mmu", print the MMU memory table
+
+                mmu->print();
+
+            }else if(arguments.at(1) == "page"){ //If <object> is "page", print the page table (do not need to print anything for free frames)
+
+                page_table->print();
+
+            }else if(arguments.at(1) == "processes"){ //If <object> is "processes", print a list of PIDs for processes that are still running
+
+            }else{ //If <object> is a "<PID>:<var_name>", print the value of the variable for that process
+
+            }
 
         }else if(arguments.at(0) == "free"){
 
         }else if(arguments.at(0) == "terminate"){
 
         }else{
+
             printf("error: command not recognized");
+
         }
 
         // Get next command
@@ -138,19 +158,47 @@ void createProcess(int text_size, int data_size, Mmu *mmu, PageTable *page_table
 void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_t num_elements, Mmu *mmu, PageTable *page_table)
 {
     // TODO: implement this!
+    int num_bytes = 0;
+    if(type == DataType::Char){
+        num_bytes = num_elements;
+    }else if(type == DataType::Short){
+        num_bytes = num_elements * 2;
+    }else if(type == DataType::Int || type == DataType::Float){
+        num_bytes = num_elements * 4;
+    }else if(type == DataType::Long || type == DataType::Double){
+        num_bytes = num_elements * 8;
+    }
+
+    int virtual_address = 0;
+
     //   - find first free space within a page already allocated to this process that is large enough to fit the new variable
+    //go through page table checking if there is space large enough for num_bytes
+    //need to have a function in pagetable class??
+
     //   - if no hole is large enough, allocate new page(s)
+
     //   - insert variable into MMU
+    mmu->addVariableToProcess(pid, var_name, type, num_bytes, virtual_address);
+
     //   - print virtual memory address
+    mmu->print();
 }
 
 void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *value, Mmu *mmu, PageTable *page_table, void *memory)
 {
+    int physical_address = 0;
+    int virtual_address = 0;
+    
+
     // TODO: implement this!
     //   - look up physical address for variable based on its virtual address / offset
+    physical_address = virtual_address + offset;
+    //OR physical_address = page_table->getPhysicalAddress(pid, )??
+
     //   - insert `value` into `memory` at physical address
     //   * note: this function only handles a single element (i.e. you'll need to call this within a loop when setting
     //           multiple elements of an array)
+    
 }
 
 void freeVariable(uint32_t pid, std::string var_name, Mmu *mmu, PageTable *page_table)
@@ -168,21 +216,19 @@ void terminateProcess(uint32_t pid, Mmu *mmu, PageTable *page_table)
 }
 
 
-/*
 DataType findDataType(std::string data_type_as_string){
     if(data_type_as_string == "int"){
-        return int;
+        return DataType::Int;
     }else if(data_type_as_string == "double"){
-        return double;
+        return DataType::Double;
     }else if(data_type_as_string == "char"){
-        return char;
+        return DataType::Char;
     }else if(data_type_as_string == "long"){
-        return long;
+        return DataType::Long;
     }
-    printf("error didn't have a correct data type passed");
-    return int;
+    printf("error didn't have a valid data type passed");
+    return DataType::Int;
 }
-*/
 
 
 //Recieved approval to use this method from Professor Marrinan - from OS-osshell homework
