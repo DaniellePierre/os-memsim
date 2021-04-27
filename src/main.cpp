@@ -80,21 +80,26 @@ int main(int argc, char **argv)
         }else if(arguments.at(0) == "set"){//MINIMUM
         int pid;
         std::string name;
+        int offset;
+        std::string value;        
 
         pid = std::stoi(arguments.at(1));
         name = arguments.at(2);
+        offset = std::stoi(arguments.at(3));
 
+        for(int i = 4; i < arguments.size(); i++){
+            value = arguments.at(i);
+            setVariable(pid, name, offset, &value, mmu, page_table, memory);
+            offset++;
+
+        }
 
         }else if(arguments.at(0) == "print"){//MINIMUM
 
             if(arguments.at(1) == "mmu"){ //if <object> is "mmu", print the MMU memory table
-
                 mmu->print();
-
             }else if(arguments.at(1) == "page"){ //If <object> is "page", print the page table (do not need to print anything for free frames)
-
                 page_table->print();
-
             }else if(arguments.at(1) == "processes"){ //If <object> is "processes", print a list of PIDs for processes that are still running
 
             }else{ //If <object> is a "<PID>:<var_name>", print the value of the variable for that process
@@ -107,7 +112,7 @@ int main(int argc, char **argv)
 
         }else{
 
-            printf("error: command not recognized");
+            printf("error: command not recognized\n");
 
         }
 
@@ -169,7 +174,44 @@ void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_
         num_bytes = num_elements * 8;
     }
 
-    int virtual_address = 0;
+    int virtualAddress = 0;
+
+    Process* process = mmu->getProcess(pid);
+    DataType typeOfProcess = mmu->getDataType(pid);
+    int sizeOfProcess = mmu->getSize(pid);
+
+    //first go through mmu and find a FREESPACE
+    while((typeOfProcess != FreeSpace) && (sizeOfProcess < num_bytes)){
+        //continue until a FreeSpace is found
+        int nextPid = pid++;
+        process = mmu->getProcess(nextPid);
+        typeOfProcess = mmu->getDataType(nextPid);
+        sizeOfProcess = mmu->getSize(nextPid);
+    }
+
+    //because of how looping need to get the next variables address
+
+    //once a FREESPACE is found check the size
+    //if the size is the same or greater than the size of what you are tring to allocate use that one
+    //if(*process->variables->size < num_bytes){
+        //need to find next FreeSpace
+    //}
+
+    //check the page size and make sure an element is not crossing page boundries
+    //if not just add it
+    //if it is you need to make it so it doesn't
+    
+
+    //add the variable to that spot
+    //change the name to the variable name and use the correct ammount of size
+
+    //make sure the page exists that you are trying to put something one
+    //if not make a new one
+    //make sure enough frames exist
+    //if not make more starting with the first unused frame number
+
+    //resize the FREESPACE variable with the correct size 
+    //add one before new vairble if you had to correct to fit elements on a page
 
     //   - find first free space within a page already allocated to this process that is large enough to fit the new variable
     //go through page table checking if there is space large enough for num_bytes
@@ -178,22 +220,23 @@ void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_
     //   - if no hole is large enough, allocate new page(s)
 
     //   - insert variable into MMU
-    mmu->addVariableToProcess(pid, var_name, type, num_bytes, virtual_address);
+    mmu->addVariableToProcess(pid, var_name, type, num_bytes, virtualAddress);
 
     //   - print virtual memory address
-    mmu->print();
+    //mmu->print();
 }
 
 void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *value, Mmu *mmu, PageTable *page_table, void *memory)
 {
-    int physical_address = 0;
+    int physical_address;
     int virtual_address = 0;
     
 
     // TODO: implement this!
     //   - look up physical address for variable based on its virtual address / offset
-    physical_address = virtual_address + offset;
     //OR physical_address = page_table->getPhysicalAddress(pid, )??
+    
+    //physical_address = page_table->getPhysicalAddress(pid); //need something else here
 
     //   - insert `value` into `memory` at physical address
     //   * note: this function only handles a single element (i.e. you'll need to call this within a loop when setting
@@ -225,6 +268,10 @@ DataType findDataType(std::string data_type_as_string){
         return DataType::Char;
     }else if(data_type_as_string == "long"){
         return DataType::Long;
+    }else if(data_type_as_string == "float"){
+        return DataType::Float;
+    }else if(data_type_as_string == "short"){
+        return DataType::Short;
     }
     printf("error didn't have a valid data type passed");
     return DataType::Int;

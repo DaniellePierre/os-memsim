@@ -76,5 +76,11 @@ void PageTable::print()
     for (i = 0; i < keys.size(); i++)
     {
         // TODO: print all pages
+        size_t value = keys[i].find("|");
+        int pid = std::stoi(keys[i].substr(0, value));
+        int page = std::stoi(keys[i].substr(value+1));
+        int frame = _table[keys[i]];
+
+        printf(" %4u | %11d | %12d\n", pid, page, frame);
     }
 }
