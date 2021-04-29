@@ -101,7 +101,7 @@ int main(int argc, char **argv)
             }else if(arguments.at(1) == "page"){ //If <object> is "page", print the page table (do not need to print anything for free frames)
                 page_table->print();
             }else if(arguments.at(1) == "processes"){ //If <object> is "processes", print a list of PIDs for processes that are still running
-
+                mmu->printProcesses();
             }else{ //If <object> is a "<PID>:<var_name>", print the value of the variable for that process
 
             }
@@ -189,41 +189,42 @@ void allocateVariable(uint32_t pid, std::string var_name, DataType type, uint32_
         sizeOfProcess = mmu->getSize(nextPid);
     }
 
-    //because of how looping need to get the next variables address
-
-    //once a FREESPACE is found check the size
-    //if the size is the same or greater than the size of what you are tring to allocate use that one
-    //if(*process->variables->size < num_bytes){
-        //need to find next FreeSpace
-    //}
-
     //check the page size and make sure an element is not crossing page boundries
-    //if not just add it
-    //if it is you need to make it so it doesn't
-    
+    int physical_address = page_table->getPhysicalAddress(pid, virtualAddress);
+    int page_size = page_table->getPageSize();
+    int space_on_page = page_size - physical_address;
+    int gap = space_on_page % num_bytes;
+    if(gap != 0){
+    //not enough space on the page to fit a whole element
+        physical_address = physical_address + gap;
+    }
 
+    //if not just add it or fix and add it
+    int page_number = page_table->getPageNumber(physical_address);
     //add the variable to that spot
-    //change the name to the variable name and use the correct ammount of size
-
     //make sure the page exists that you are trying to put something one
     //if not make a new one
     //make sure enough frames exist
     //if not make more starting with the first unused frame number
+    //should all happen in addEntry
+    page_table->addEntry(pid, page_number);
+    
+    //change the name to the variable name and use the correct ammount of size
+    mmu->setNewVariable(pid, var_name, sizeOfProcess);   
 
-    //resize the FREESPACE variable with the correct size 
+    //resize the post FREESPACE variable with the correct size 
+    //TODO next line seg faulting check this out
+    //mmu->resizePostNewVariableSize(pid);
+
     //add one before new vairble if you had to correct to fit elements on a page
-
-    //   - find first free space within a page already allocated to this process that is large enough to fit the new variable
-    //go through page table checking if there is space large enough for num_bytes
-    //need to have a function in pagetable class??
-
-    //   - if no hole is large enough, allocate new page(s)
+    //TODO next line seg faulting check this out
+    //mmu->checkForGapFreeSpace(pid);
 
     //   - insert variable into MMU
     mmu->addVariableToProcess(pid, var_name, type, num_bytes, virtualAddress);
 
     //   - print virtual memory address
-    //mmu->print();
+    mmu->print();
 }
 
 void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *value, Mmu *mmu, PageTable *page_table, void *memory)
@@ -231,7 +232,6 @@ void setVariable(uint32_t pid, std::string var_name, uint32_t offset, void *valu
     int physical_address;
     int virtual_address = 0;
     
-
     // TODO: implement this!
     //   - look up physical address for variable based on its virtual address / offset
     //OR physical_address = page_table->getPhysicalAddress(pid, )??
